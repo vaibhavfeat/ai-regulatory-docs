@@ -28,22 +28,49 @@ The following table categorizes different types of PII, with specific examples r
 ### Regex Patterns for PII Detection
 Regular expressions (**Regex**) are a key tool for automatically detecting PII within text. Below are common regex patterns for various PII types:
 
-| **PII Type** | **Regex Pattern** | **Notes** |
-| :--- | :--- | :--- |
-| Aadhaar Number | `\b\d{4}\s\d{4}\s\d{4}\b` | Standard Aadhaar format (xxxx xxxx xxxx). |
-| PAN (Permanent Account No.) | `\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b` | 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F). |
-| Passport Number | `\b[A-PR-WYa-pr-wy][1-9]\d{6}\b` | Starts with a letter, followed by 7 digits (India-specific). |
-| Voter ID | `\b[A-Z]{3}\d{7}\b` | 3 letters + 7 digits. |
-| Driving License (India) | `\b[ A-Z]{2}\d{2}\s?\d{11}\b` | Varies by state; example: MH12 20202020202. |
-| Bank Account Numbers | `\b\d{9,18}\b` | Usually 9–18 digits (bank-specific). |
-| IFSC Code | `\b[A-Z]{4}0[A-Z0-9]{6}\b` | Example: SBIN0001234. |
-| Credit/Debit Card Numbers | `\b(?:\d[ -]*?){13,16}\b` | Matches 13–16 digit card numbers. |
-| CVV | `\b\d{3,4}\b` | 3 digits (Visa/Mastercard), 4 digits (Amex). |
-| UPI ID | `\b[\w.-]+@[a-zA-Z]+\b` | Example: username@okaxis. |
-| Demat/Trading Account | `\b\d{8}\b` | Usually 8-digit client ID. |
-| Mobile Number (India) | `\b(?:\+91[-\s]?)?[6-9]\d{9}\b` | |
-| Email Address | `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` | |
-| IP Address (IPv4) | `\b(?:\d{1,3}\.){3}\d{1,3}\b` | |
+
+| **PII Type**            | **Regex Pattern**                                                                 | **Notes**                                                                                     |
+|--------------------------|-----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Aadhaar Number           | `\b\d{4}\s\d{4}\s\d{4}\b`                                                         | Standard Aadhaar format (xxxx xxxx xxxx).                                                     |
+| PAN (Permanent Account)  | `\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b`                                                    | 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F).                                           |
+| Passport Number          | `\b[A-PR-WYa-pr-wy][1-9]\d{6}\b`                                                  | Starts with a letter, followed by 7 digits (India-specific).                                  |
+| Voter ID                 | `\b[A-Z]{3}\d{7}\b`                                                               | 3 letters + 7 digits.                                                                         |
+| Driving License (India)  | `\b[ A-Z]{2}\d{2}\s?\d{11}\b`                                                     | Format varies by state; example: MH12 20202020202.                                            |
+| Bank Account Numbers     | `\b\d{9,18}\b`                                                                    | Usually 9–18 digits (bank-specific).                                                          |
+| IFSC Code                | `\b[A-Z]{4}0[A-Z0-9]{6}\b`                                                        | Example: SBIN0001234.                                                                         |
+| Credit/Debit Card Nos.   | `\b(?:\d[ -]*?){13,16}\b`                                                         | Matches 13–16 digit card numbers (with or without spaces/dashes).                             |
+| CVV                      | `\b\d{3,4}\b`                                                                     | 3 digits (Visa/Mastercard), 4 digits (Amex).                                                  |
+| UPI ID                   | `\b[\w.-]+@[a-zA-Z]+\b`                                                           | Example: username@okaxis.                                                                     |
+| Demat/Trading Account    | `\b\d{8}\b`                                                                       | Usually 8-digit client ID.                                                                    |
+| Username/Password        | `[A-Za-z0-9!@#$%^&*()_+=-{}:;"'<>,.?]{6,}`                                        | Generic; needs stronger policies.                                                             |
+| Biometric/Digital Sign   | ❌                                                                                 | Not regex-detectable. Requires different detection methods.                                   |
+
+
+| **PII Type**      | **Regex Pattern**                                                 | **Notes**                                              |
+|--------------------|-------------------------------------------------------------------|--------------------------------------------------------|
+| Full Name (approx) | `\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)\b`                             | Detects 2+ capitalized words (not fully reliable).     |
+| Date of Birth      | `\b(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[0-2])[- /.](19|20)\d\d\b` | dd-mm-yyyy (basic format).                             |
+| Address (approx)   | `\d{1,4}\s[A-Za-z0-9\s,.-]+`                                      | Needs NLP for better accuracy.                        |
+| Tax Return Numbers | `\b\d{10,15}\b`                                                   | Indian TINs usually 11 digits.                        |
+| Salary Docs        | `(?i)(salary slip|ctc)`                                          | Case-insensitive detection of salary/CTC references.  |
+
+
+| **PII Type**    | **Regex Pattern**                                            | **Notes**                      |
+|------------------|--------------------------------------------------------------|--------------------------------|
+| Mobile Number    | `\b(?:\+91[-\s]?)?[6-9]\d{9}\b`                              | Indian mobile numbers.         |
+| Email Address    | `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`             | Generic email regex.           |
+| IP Address (v4)  | `\b(?:\d{1,3}\.){3}\d{1,3}\b`                                | Matches IPv4.                  |
+| Cookies/Session  | `\b[A-Za-z0-9+/]{20,}\b`                                     | Approx. session/cookie tokens. |
+| GPS Coordinates  | `\b-?\d{1,2}\.\d+,\s?-?\d{1,3}\.\d+\b`                       | Latitude, Longitude format.    |
+
+
+| **PII Type**        | **Regex Pattern**             | **Notes**                                 |
+|----------------------|-------------------------------|-------------------------------------------|
+| Loan Account Number  | `\b\d{12,16}\b`              | 12–16 digit account IDs.                  |
+| Credit Scores        | `\b[3-8]\d{2}\b`             | 300–899 (CIBIL-like).                     |
+| Transaction IDs      | `\b[0-9A-Z]{12,18}\b`        | 12–18 chars alphanumeric.                 |
+| Portfolio Codes      | `\b[A-Z]{2,5}\d{3,6}\b`      | 2–5 letters + 3–6 digits.                 |
+
 
 > **Note:** Some data, like biometrics and digital signatures, cannot be detected by regex and requires alternative methods.
 
@@ -112,3 +139,4 @@ console.log(JSON.stringify(result, null, 2));
 
 1.  SSL Certificate
 2.  Actionbl --> Encrypt Request Payload ---> API Server --> Decrypt Payload --> AI Model --> AI Output --> Api Server --> Encrypt Output --> Actionbl --> Decrypt
+
