@@ -119,6 +119,7 @@ console.log(JSON.stringify(result, null, 2));
 #### Output
 
 ```json
+
 Original Text:
 My email is john.doe@example.com, my phone number is 555-123-4567, and my SSN is 123-45-6789.
 
