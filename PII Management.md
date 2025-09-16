@@ -1,7 +1,19 @@
 # Data Privacy and Security in AI Models
-***
+
+1.  **PII must being Isolated, protected, and anonymized before entering in model including Prompts**
+2.  **PII must be masked, PII Must be encrypted and Tokenized**
+3.	Encryption at rest and in transit implemented for all PII data including Field Level PII Encyption even for Api's , AI Prompts and Logs etc
+4.  **Field Level PII Encyption and PII Masking at all stages even for Api's and Logs and Prompts etc.**
+5.	How Data minimization (only required PII fields) handled in AI Model
+6.	How are you ensuring protection of PII data privacy and security throughout the entire AI lifecycle. ensure and Document each purpose for using personal data at each stage of the AI lifecycle, assess whether they are compatible with the originally defined purpose mentioned in data processing scope/PII Inventory template, and schedule reviews to reassess your purposes and whether they remain compatible.
+7.	How are you Ensuring that LLMs are not trained on or do not have access to any of sensitive data or PII data without appropriate anonymization, and pseudonymization or tokenization.
+8.	How are you  Ensuring mechanisms to detect and possibly redact personally identifiable information (PII) that users might inadvertently include in their prompts.
+9.	share controls list to ensure no PII data entering in AI model without Anonymization
+
+
 ## 1. PII Isolation, Protection, and Anonymization
 Before any data, including prompts, enters an AI model, **Personally Identifiable Information (PII)** must be identified, isolated, protected, and anonymized. This is the first critical step to ensure data privacy.
+
 
 ### Identifying PII Information
 The following table categorizes different types of PII, with specific examples relevant to the Indian financial context.
@@ -81,4 +93,22 @@ function redactPIIWithMapping(text) {
 // Example usage
 const sampleText = "My email is john.doe@example.com, my phone number is 555-123-4567, and my SSN is 123-45-6789.";
 const result = redactPIIWithMapping(sampleText);
+
 console.log(JSON.stringify(result, null, 2));
+```
+## Output
+```json
+{
+  "redactedText": "My email is [PII:EMAIL:0], my phone number is [PII:PHONE:1], and my SSN is [PII:SSN:2].",
+  "piiMap": {
+    "[PII:EMAIL:0]": "john.doe@example.com",
+    "[PII:PHONE:1]": "555-123-4567",
+    "[PII:SSN:2]": "123-45-6789"
+  }
+}
+```
+
+## Encryption Points Solution:
+
+1.  SSL Certificate
+2.  Actionbl --> Encrypt Request Payload ---> API Server --> Decrypt Payload --> AI Model --> AI Output --> Api Server --> Encrypt Output --> Actionbl --> Decrypt
