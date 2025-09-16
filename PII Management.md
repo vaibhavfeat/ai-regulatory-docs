@@ -1,0 +1,84 @@
+# Data Privacy and Security in AI Models
+***
+## 1. PII Isolation, Protection, and Anonymization
+Before any data, including prompts, enters an AI model, **Personally Identifiable Information (PII)** must be identified, isolated, protected, and anonymized. This is the first critical step to ensure data privacy.
+
+### Identifying PII Information
+The following table categorizes different types of PII, with specific examples relevant to the Indian financial context.
+
+| **Category** | **Description** | **Examples in Indian Financial Context** |
+| :--- | :--- | :--- |
+| **Highly Sensitive PII** | Data that, if compromised, can lead to severe financial fraud, identity theft, or significant reputational damage. | **Financial IDs:** Bank Account Numbers, IFSC codes, Credit/Debit Card Numbers, CVV, UPI IDs, Demat and Trading Account Numbers <br><br> **Government IDs:** Aadhaar Number, PAN, Passport Number, Voter ID, Driving License Number <br><br> **Authentication Data:** Biometric data (fingerprints, facial scans), Usernames and passwords, Digital signatures, Health data (for insurance products) |
+| **Sensitive PII** | Information crucial for identification that, if combined with other data, can pose a risk. | **Personal Information:** Full name, date of birth, Mother’s maiden name, Father’s/Spouse’s name, Permanent and correspondence addresses <br><br> **Financial Documents:** Tax returns, salary slips, Financial statements, loan application forms |
+| **Non-Sensitive PII** | Generally public data still considered personal. | **Contact Information:** Mobile number, Email address <br><br> **Online Identifiers:** IP addresses, Cookies, Device identifiers, Location data (GPS) |
+| **Other Confidential Data** | Information not classified as PII but is still confidential and related to the financial sector. | **Proprietary Information:** Customer transaction histories, Loan repayment schedules, Credit scores, Investment portfolio details, Call recordings |
+
+### Regex Patterns for PII Detection
+Regular expressions (**Regex**) are a key tool for automatically detecting PII within text. Below are common regex patterns for various PII types:
+
+| **PII Type** | **Regex Pattern** | **Notes** |
+| :--- | :--- | :--- |
+| Aadhaar Number | `\b\d{4}\s\d{4}\s\d{4}\b` | Standard Aadhaar format (xxxx xxxx xxxx). |
+| PAN (Permanent Account No.) | `\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b` | 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F). |
+| Passport Number | `\b[A-PR-WYa-pr-wy][1-9]\d{6}\b` | Starts with a letter, followed by 7 digits (India-specific). |
+| Voter ID | `\b[A-Z]{3}\d{7}\b` | 3 letters + 7 digits. |
+| Driving License (India) | `\b[ A-Z]{2}\d{2}\s?\d{11}\b` | Varies by state; example: MH12 20202020202. |
+| Bank Account Numbers | `\b\d{9,18}\b` | Usually 9–18 digits (bank-specific). |
+| IFSC Code | `\b[A-Z]{4}0[A-Z0-9]{6}\b` | Example: SBIN0001234. |
+| Credit/Debit Card Numbers | `\b(?:\d[ -]*?){13,16}\b` | Matches 13–16 digit card numbers. |
+| CVV | `\b\d{3,4}\b` | 3 digits (Visa/Mastercard), 4 digits (Amex). |
+| UPI ID | `\b[\w.-]+@[a-zA-Z]+\b` | Example: username@okaxis. |
+| Demat/Trading Account | `\b\d{8}\b` | Usually 8-digit client ID. |
+| Mobile Number (India) | `\b(?:\+91[-\s]?)?[6-9]\d{9}\b` | |
+| Email Address | `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` | |
+| IP Address (IPv4) | `\b(?:\d{1,3}\.){3}\d{1,3}\b` | |
+
+> **Note:** Some data, like biometrics and digital signatures, cannot be detected by regex and requires alternative methods.
+
+***
+## 2. PII Masking, Encryption, and Tokenization 🛡️
+Once identified, PII is protected using a combination of techniques:
+* **Masking:** PII is obscured or replaced with characters like `*` or `X` in logs and displays, making it unreadable.
+* **Encryption:** Data is transformed into an unreadable format using a key. This is a crucial defense against unauthorized access.
+* **Tokenization:** PII is replaced with a non-sensitive surrogate value (a "token") that holds no meaning or value on its own. This token can then be used in the AI model, while the original PII is stored securely and separately.
+
+***
+## 3. Encryption at Rest and in Transit
+**Encryption** must be implemented for all PII data at every stage.
+* **Encryption at Rest:** Data stored in databases, logs, and file systems must be encrypted.
+* **Encryption in Transit:** Data moving between systems, such as from a user's device to an API server or from an API server to the AI model, must be secured using protocols like **SSL/TLS**. This includes API payloads, logs, and prompts.
+* **Field-Level Encryption:** Sensitive PII fields should be individually encrypted, providing an extra layer of security.
+
+***
+## 4. Field-Level PII Encryption and Masking
+This control is applied across the entire data flow, including API calls, logs, and AI prompts. It ensures that even if a part of the system is compromised, the sensitive data within it remains protected. The `redactPIIWithMapping` function provided in the prompt is an excellent example of how to implement **masking** and **tokenization** programmatically. It replaces PII with a placeholder token, creating a map to de-identify the original data, thus preventing sensitive information from ever reaching the model.
+
+```javascript
+// Function to redact PII and create a mapping
+function redactPIIWithMapping(text) {
+  const patterns = {
+    EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+    PHONE: /\b(\d{3}[-.\s]??\d{3}[-.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-.\s]??\d{4}|\d{10})\b/g,
+    SSN: /\b\d{3}[-.\s]??\d{2}[-.\s]??\d{4}\b/g,
+    IP_ADDRESS: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g,
+  };
+
+  let redactedText = text;
+  const piiMap = {};
+  let counter = 0;
+
+  for (const piiType in patterns) {
+    redactedText = redactedText.replace(patterns[piiType], (match) => {
+      const placeholder = `[PII:${piiType}:${counter}]`;
+      piiMap[placeholder] = match;
+      counter++;
+      return placeholder;
+    });
+  }
+  return { redactedText, piiMap };
+}
+
+// Example usage
+const sampleText = "My email is john.doe@example.com, my phone number is 555-123-4567, and my SSN is 123-45-6789.";
+const result = redactPIIWithMapping(sampleText);
+console.log(JSON.stringify(result, null, 2));
